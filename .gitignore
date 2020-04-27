@@ -1,12 +1,8 @@
 # Added by me
-.vscode
 .vscode/
 backups/
 examples/
 tests/
-backups
-examples
-tests
 # Compiled source #
 ###################
 *.com
