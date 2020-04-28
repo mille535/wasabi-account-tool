@@ -103,9 +103,7 @@ def provision_account(customer):
     # Sets the file name and path as a vairable
     out_key_file = os.path.join(
         os.path.join(
-            os.path.join(
-                os.environ['USERPROFILE']),
-            'Desktop'),
+            os.path.expanduser('~')),
         customer +
         '-WasabiKey.txt')
 

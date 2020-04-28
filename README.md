@@ -19,4 +19,4 @@ This script will provision a user on Wasabi (or s3 if properly modified). Provis
 ### Issues:
   * ARN name in remove portion of the script is hardcoded making this code not portable
   * Group removal is also hardcoded
-  * writing to desktop does not work under unix
+  * ~~writing to desktop does not work under unix~~ Fixed by using ~ instead of USERPROFILE and taking desktop out of the equation
