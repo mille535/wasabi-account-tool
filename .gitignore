@@ -3,6 +3,7 @@
 backups/
 examples/
 tests/
+env/
 # Compiled source #
 ###################
 *.com
