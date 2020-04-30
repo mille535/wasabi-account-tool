@@ -1,13 +1,12 @@
 # Kirk Miller April 2020
 
 import os
-from os import system, name
+import argparse
 import boto3
 
 
 def provision_account(customer):
     """This function provisions a new Wasabi account with var customer"""
-    clear()
     # Create IAM client, %userprofile%\.aws needs to contain config and
     # credentials files
     client = boto3.client('iam',
@@ -112,14 +111,11 @@ def provision_account(customer):
     print(out_file_text)
     print("-" * 80)
     print("A copy of key/secret pair for {} has been saved to {}".format(customer, out_key_file))
-    print("Operation complete. Program Exiting.")
+    print("Account for {} added successfully.".format(customer))
 
     # writes displayed text to a file on the desktop
     with open(out_key_file, "w") as f:
         f.write(out_file_text)
-
-    # uncomment the line below for compiled verion
-    input("Press Enter to exit...")
 
 
 def remove_account(customer):
@@ -203,95 +199,45 @@ def remove_account(customer):
         Bucket=customer
     )
     print("Deleting bucket: {}.....Done".format(customer))
-    print("Account for {} has been sucesfully removed.\n".format(customer))
-    print("Program Exiting.")
-
-    # uncomment the line below for compiles verion
-    input("Press Enter to exit...")
-
-# function to clear the screen buffer
+    print("Account for {} removed successfully.".format(customer))
 
 
-def clear():
-    """clears the terminal window"""
-    if name == 'nt':
-        _ = system('cls')
+# Create the argument parser
+my_parser = argparse.ArgumentParser(description='Wasabi user maintenance tool',
+                                                epilog="2020 Kirk Miller, enjoy :)")
+my_group = my_parser.add_mutually_exclusive_group(required=True)
 
-        # for mac and linux(here, os.name is 'posix')
+# Add the arguments
+my_group.add_argument('-a',
+                      '--add',
+                      metavar='username',
+                      type=str,
+                      help='Create a new Wasabi user')
+my_group.add_argument('-d',
+                      '--delete',
+                      metavar='username',
+                      type=str,
+                      help='Delete an existing Wasabi user')
+
+# Execute parse_args()
+args = my_parser.parse_args()
+
+# file path for .aws folder
+creds_file = os.path.join(
+    os.path.join(
+        os.path.expanduser('~')),
+    '.aws')
+
+# main logic loop for command line arguments
+if args.add and os.path.isdir(creds_file):
+    provision_account(args.add)
+elif args.delete and os.path.isdir(creds_file):
+    print("Are you sure you want to remove user: {}?".format(args.delete))
+    cust_name = input("To confirm enter the user name again: ")
+    if args.delete == cust_name:
+        remove_account(args.delete)
     else:
-        _ = system('clear')
-
-
-def cli_setup():
-    """main cli setup loop"""
-    clear()
-    print("-" * 79)
-    print('|{:^77}|'.format("Wasabi Client Setup Tool"))
-    print('|{:77}|'.format("-" * 77))
-    print('|{:<77}|'.format("1. Setup a new customer."))
-    print('|{:77}|'.format(" " * 77))
-    print('|{:<77}|'.format("2. Delete an existing customer."))
-    print('|{:77}|'.format(" " * 77))
-    print('|{:<77}|'.format(
-        "3. This DOS looking box gives me anxiety. Exit the program."))
-    print("-" * 79)
-
-    answer = None
-    while answer not in ("1", "2", "3"):
-        answer = input("Please selection an option: ")
-        if answer == "1":
-            clear()
-            print("-" * 79)
-            print('|{:^77}|'.format(
-                "Wasabi Client Setup Tool - New Account Setup"))
-            print('|{:77}|'.format("-" * 77))
-            print('|{:77}|'.format(" " * 77))
-            print('|{:77}|'.format(" " * 77))
-            print('|{:<77}|'.format(
-                "A new Wasabi account comprises of three main items: A bucket, a user, and a"))
-            print('|{:<77}|'.format(
-                "limiting policy. These items will be programmatically derived from the input"))
-            print('|{:<77}|'.format(
-                "below. The user and the bucket will have the same name as the customer name"))
-            print('|{:<77}|'.format(
-                "and the policy will be the customers name appended with -limit. "))
-            print('|{:77}|'.format(" " * 77))
-            print('|{:<77}|'.format(
-                "If you would like to exit at this point user CTL+C"))
-            print('|{:77}|'.format(" " * 77))
-            print('|{:77}|'.format(" " * 77))
-            print("-" * 79)
-            customer_name = input("Enter the customers name: ")
-            provision_account(customer_name)
-        elif answer == "2":
-            clear()
-            print("-" * 79)
-            print('|{:^77}|'.format("Wasabi Client Setup Tool - Remove Account"))
-            print('|{:77}|'.format("-" * 77))
-            print('|{:77}|'.format(" " * 77))
-            print('|{:77}|'.format(" " * 77))
-            print('|{:<77}|'.format(
-                "The remove account function should only be used on accounts setup with this"))
-            print('|{:<77}|'.format(
-                "tool as incosisencies in naming conventions on account setup manually will"))
-            print('|{:<77}|'.format(
-                "raise an error leaving accounts still partially setup. Should this happen the"))
-            print('|{:<77}|'.format(
-                "user, bucket, and policy can all be removed manually at"))
-            print('|{:<77}|'.format("https://console.wasabisys.com"))
-            print('|{:77}|'.format(" " * 77))
-            print('|{:<77}|'.format(
-                "If you would like to exit at this point user CTL+C"))
-            print('|{:77}|'.format(" " * 77))
-            print('|{:77}|'.format(" " * 77))
-            print("-" * 79)
-            customer_name = input("Enter the customers name: ")
-            remove_account(customer_name)
-        elif answer == "3":
-            print("Exiting Program.")
-            break
-        else:
-            print("Invalid selection, please enter 1,2,3")
-
-
-cli_setup()
+        print("ERROR: Names do not match.")
+else:
+    print("ERROR: Could not find Wasabi credentials file.")
+    print("Please make sure the {} folder is present and contains config and credentials files".format(creds_file))

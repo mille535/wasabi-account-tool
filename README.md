@@ -13,8 +13,8 @@ This script will provision a user on Wasabi (or s3 if properly modified). Provis
     * A way to encrypt saved credentials
   * Add report to show users and policies applied
   * Maybe in the future have an option for verbosity to show output of response for each command
-  * ability to run the script completely by command. python main.py -add -joe
-  * A better interface whether its a better console interface or just command line or web--just something less clunky
+  * ~~ability to run the script completely by command. python main.py -add -joe~~
+  * ~~A better interface whether its a better console interface or just command line or web--just something less clunky~~
 
 ### Issues:
   * ARN name in remove portion of the script is hardcoded making this code not portable
