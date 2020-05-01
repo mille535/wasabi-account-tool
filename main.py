@@ -1,4 +1,10 @@
-# Kirk Miller April 2020
+"""
+Kirk Miller April 2020.
+
+A simple command line tool to
+add or remove wasabi storage accounts using Amazon's boto3
+library and the S3 API
+"""
 
 import os
 import argparse
@@ -204,7 +210,7 @@ def remove_account(customer):
 
 # Create the argument parser
 my_parser = argparse.ArgumentParser(description='Wasabi user maintenance tool',
-                                                epilog="2020 Kirk Miller, enjoy :)")
+                                    epilog="2020 Kirk Miller, enjoy :)")
 my_group = my_parser.add_mutually_exclusive_group(required=True)
 
 # Add the arguments
@@ -240,4 +246,5 @@ elif args.delete and os.path.isdir(creds_file):
         print("ERROR: Names do not match.")
 else:
     print("ERROR: Could not find Wasabi credentials file.")
-    print("Please make sure the {} folder is present and contains config and credentials files".format(creds_file))
+    print("Please make sure the {} folder is present and"\
+         " contains config and credentials files".format(creds_file))
