@@ -7,21 +7,23 @@ This is my first independent Python program created 100% by myself without guida
 This script will provision a user on Wasabi (or s3 if properly modified). Provisioning a user consists of: creating a bucket, creating an IAM user, creating and applying an IAM policy, adding user to backupclients group, and generating key/secret pair.
 
 ### Current Work:
-  * Check if user exists and setup a dictionary of user attributes. 
-    * 2 separate functions: ~~one to check user existence~~ and one to get user details
   * Function to add/change/delete/and test aws credentials
+    * Test that credentials work and have admin permissions
 
 ### ToDo:
   * Error checking. make sure account don’t already exist and handle error, input checking as well
   * Convert policy document creation function that uses JSON module instead of a string
   * A way to add / remove credentials stored in .aws folder
     * A way to encrypt saved credentials
-  * Add report to show users and policies applied
   * Maybe in the future have an option for verbosity to show output of response for each command
+  * Re-write arg parse logic, can probably be handled better. It works for now. 
   * ~~ability to run the script completely by command. python main.py -add -joe~~
   * ~~A better interface whether its a better console interface or just command line or web--just something less clunky~~
 
 ### Issues:
-  * ARN name in remove portion of the script is hardcoded making this code not portable
-  * Group removal is also hardcoded
+  * ~~ARN name in remove portion of the script is hardcoded making this code not portable~~
+  * ~~Group removal is also hardcoded~~
   * ~~writing to desktop does not work under unix~~ Fixed by using ~ instead of USERPROFILE and taking desktop out of the equation
+
+### Things to note:
+  * This script will delete ALL of the polices attached to the clients username. This is by design. May consider adding a switch for this behavior. 

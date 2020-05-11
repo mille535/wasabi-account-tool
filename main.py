@@ -137,87 +137,133 @@ def remove_account(customer):
                       endpoint_url='https://s3.wasabisys.com',
                       )
 
-    # creates variable for policy document name based on client name
-    policy_name = customer + "-limit"
-    limit_arn_name = "arn:aws:iam::100000045798:policy/" + policy_name
+    # removes user all groups
+    for g in customer['GroupList']:
+        response = client.remove_user_from_group(
+            GroupName=g,
+            UserName=customer['Username']
+        )
+        print(
+            "Remove user: {} from group: {}.....Done".format(
+                customer['Username'], g))
 
-    # removes user from backupclients group
-    response = client.remove_user_from_group(
-        GroupName='backupclients',
-        UserName=customer
-    )
-    print("Remove user: {} from group: backupclients.....Done".format(customer))
+    # remove user from all polies
+    for p in customer['PolicyList']:
+        response = client.detach_user_policy(
+            UserName=customer['Username'],
+            PolicyArn=p
+        )
+        print(
+            "Detach policy: {} from user: {}.....Done".format(
+                p,
+                customer['Username']))
 
-    # remove user from policy
-    response = client.detach_user_policy(
-        UserName=customer,
-        PolicyArn=limit_arn_name
-    )
-    print(
-        "Detach policy: {} from user: {}.....Done".format(
-            limit_arn_name,
-            customer))
-
-    # Remove limit policy
-    response = client.delete_policy(
-        PolicyArn=limit_arn_name
-    )
-    print("Deleting IAM policy: {}.....Done".format(limit_arn_name))
+    # delete limit policy
+    for p in customer['PolicyList']:
+        response = client.delete_policy(
+            PolicyArn=p
+        )
+        print("Deleting IAM policy: {}.....Done".format(p))
 
     # remove access keys for user
-    response = client.list_access_keys(
-        UserName=customer,
-    )
-
-    for i in response.get('AccessKeyMetadata'):
+    for k in customer['AccessKey']:
         response = client.delete_access_key(
-            UserName=customer,
-            AccessKeyId=i.get('AccessKeyId')
-        )
-    print("Deleting Key and Secret for user: {}.....Done".format(customer))
+            UserName=customer['Username'],
+            AccessKeyId=k)
+    print(
+        "Deleting Key: {} for user: {}.....Done".format(
+            k, customer['Username']))
 
     # Remove user account
     response = client.delete_user(
-        UserName=customer
+        UserName=customer['Username']
     )
-    print("Remove IAM user {}.....Done".format(customer))
+    print("Remove IAM user {}.....Done".format(customer['Username']))
 
     # remove data and bucket
     response = s3.list_objects_v2(
-        Bucket=customer,
+        Bucket=customer['Username'],
     )
 
     while response['KeyCount'] > 0:
         print('Deleting {} objects from bucket {}'.format(
-            (len(response['Contents'])), customer))
+            (len(response['Contents'])), customer['Username']))
         response = s3.delete_objects(
-            Bucket=customer,
+            Bucket=customer['Username'],
             Delete={
                 'Objects': [{'Key': obj['Key']} for obj in response['Contents']]
             }
         )
         response = s3.list_objects_v2(
-            Bucket=customer,
+            Bucket=customer['Username'],
         )
 
-    print('Now deleting bucket {}'.format(customer))
+    print('Now deleting bucket {}'.format(customer['Username']))
     response = s3.delete_bucket(
-        Bucket=customer
+        Bucket=customer['Username']
     )
-    print("Deleting bucket: {}.....Done".format(customer))
-    print("Account for {} removed successfully.".format(customer))
+    print("Deleting bucket: {}.....Done".format(customer['Username']))
+    print("Account for {} removed successfully.".format(customer['Username']))
+
 
 def user_exist(customer):
     """This fucntion will return a bool based on if a users exists"""
     client = boto3.client('iam',
                           endpoint_url='https://iam.wasabisys.com'
                           )
-    
+
     try:
         exist = client.get_user(UserName=customer)
     except client.exceptions.NoSuchEntityException as e:
         exist = False
     return bool(exist)
+
+
+def get_user_info(customer):
+    """Gets key account information and stores it as a dict"""
+
+    # setup variables
+    user_data = {'Username': customer}
+    group_list = []
+    policy_list = []
+    access_keys = []
+
+    # setup boto3 client for Wasabi
+    client = boto3.client('iam',
+                          endpoint_url='https://iam.wasabisys.com',
+                          )
+
+    # lists all groups attached to specified users
+    response = client.list_groups_for_user(
+        UserName=customer
+    )
+
+    # stores group info as a list in user group dict
+    for group in response['Groups']:
+        group_list.append(group['GroupName'])
+        user_data['GroupList'] = group_list
+
+    # lists all policies attached to specified user
+    response = client.list_attached_user_policies(
+        UserName=customer
+    )
+
+    # stores policy info as a list in user group dict
+    for policy in response['AttachedPolicies']:
+        policy_list.append(policy['PolicyArn'])
+        user_data['PolicyList'] = policy_list
+
+    # lists all access keys for specified user
+    response = client.list_access_keys(
+        UserName=customer,
+    )
+
+    # stores access key info as a list in user group dict
+    for access_key in response.get('AccessKeyMetadata'):
+        access_keys.append(access_key['AccessKeyId'])
+        user_data['AccessKey'] = access_keys
+    return user_data
+
 
 # Create the argument parser
 my_parser = argparse.ArgumentParser(description='Wasabi user maintenance tool',
@@ -247,15 +293,21 @@ creds_file = os.path.join(
 
 # main logic loop for command line arguments
 if args.add and os.path.isdir(creds_file):
-    provision_account(args.add)
-elif args.delete and os.path.isdir(creds_file):
-    print("Are you sure you want to remove user: {}?".format(args.delete))
-    cust_name = input("To confirm enter the user name again: ")
-    if args.delete == cust_name:
-        remove_account(args.delete)
+    if not user_exist(args.add):
+        provision_account(args.add)
     else:
-        print("ERROR: Names do not match.")
+        print("Account already exists, please check name")
+elif args.delete and os.path.isdir(creds_file):
+    if user_exist(args.delete):
+        print("Are you sure you want to remove user: {}?".format(args.delete))
+        cust_name = input("To confirm enter the user name again: ")
+        if args.delete == cust_name:
+            remove_account(get_user_info(args.delete))
+        else:
+            print("ERROR: Names do not match.")
+    else:
+        print("User doesn't exist please check spelling")
 else:
     print("ERROR: Could not find Wasabi credentials file.")
-    print("Please make sure the {} folder is present and"\
-         " contains config and credentials files".format(creds_file))
+    print("Please make sure the {} folder is present and"
+          " contains config and credentials files".format(creds_file))
