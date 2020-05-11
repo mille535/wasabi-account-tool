@@ -207,6 +207,17 @@ def remove_account(customer):
     print("Deleting bucket: {}.....Done".format(customer))
     print("Account for {} removed successfully.".format(customer))
 
+def user_exist(customer):
+    """This fucntion will return a bool based on if a users exists"""
+    client = boto3.client('iam',
+                          endpoint_url='https://iam.wasabisys.com'
+                          )
+    
+    try:
+        exist = client.get_user(UserName=customer)
+    except client.exceptions.NoSuchEntityException as e:
+        exist = False
+    return bool(exist)
 
 # Create the argument parser
 my_parser = argparse.ArgumentParser(description='Wasabi user maintenance tool',

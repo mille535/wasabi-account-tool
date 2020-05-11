@@ -6,6 +6,11 @@ This is my first independent Python program created 100% by myself without guida
 ## Application Description
 This script will provision a user on Wasabi (or s3 if properly modified). Provisioning a user consists of: creating a bucket, creating an IAM user, creating and applying an IAM policy, adding user to backupclients group, and generating key/secret pair.
 
+### Current Work:
+  * Check if user exists and setup a dictionary of user attributes. 
+    * 2 separate functions: ~~one to check user existence~~ and one to get user details
+  * Function to add/change/delete/and test aws credentials
+
 ### ToDo:
   * Error checking. make sure account don’t already exist and handle error, input checking as well
   * Convert policy document creation function that uses JSON module instead of a string
