@@ -125,7 +125,8 @@ def provision_account(customer):
 
 
 def remove_account(customer):
-    """This function removes a Wasabi account with var customer"""
+    """This function removes a Wasabi account with var customer. It has been
+    re-written to take the dictionary input from the get_user_into function"""
     # Create IAM client, %userprofile%\.aws needs to contain config and
     # credentials files
     client = boto3.client('iam',
